@@ -7,7 +7,7 @@ const app = Express();
 app.get('/', (req, res) => {
     const targetUrl = req.query.url
    
-    proxy.web(req, res, { target: targetUrl }, (err) => {
+    proxy.web(req, res, { target: targetUrl, followRedirects:false }, (err) => {
         res.status(500).send(`Proxy error: ${err.message}`);
     });
 })
