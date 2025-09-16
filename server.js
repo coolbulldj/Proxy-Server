@@ -1,37 +1,60 @@
 const express = require('express');
+const path = require('path');
 const puppeteer = require('puppeteer');
+const { Server } = require('ws');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
-// Launch a single browser for efficiency
+// Serve static files
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Start Express
+const server = app.listen(port, () => console.log(`Server running on port ${port}`));
+
+// Launch Puppeteer
 let browser;
+let page;
 (async () => {
     browser = await puppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
+    page = await browser.newPage();
+    await page.setViewport({ width: 1024, height: 768 });
+    await page.goto('https://example.com');
 })();
 
-async function screenshot(url) {
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle2' });
-    const img = await page.screenshot({ encoding: 'base64' });
-    await page.close();
-    return img;
-}
+// Setup WebSocket server
+const wss = new Server({ server });
 
-// Endpoint for screenshots
-app.get('/screenshot', async (req, res) => {
-    const url = req.query.url;
-    if (!url) return res.status(400).send('Missing ?url parameter');
+wss.on('connection', ws => {
+    console.log('Client connected');
 
-    try {
-        const img = await screenshot(url);
-        res.json({ image: img }); // send base64 to client
-    } catch (err) {
-        res.status(500).send(err.message);
-    }
+    // Periodically send screenshots
+    const interval = setInterval(async () => {
+        if (!page) return;
+        const screenshot = await page.screenshot({ encoding: 'base64' });
+        ws.send(JSON.stringify({ type: 'screenshot', data: screenshot }));
+    }, 1000); // 1 screenshot per second
+
+    // Receive user events
+    ws.on('message', async message => {
+        const msg = JSON.parse(message);
+        if (!page) return;
+
+        try {
+            if (msg.type === 'click') {
+                await page.mouse.click(msg.x, msg.y);
+            } else if (msg.type === 'keypress') {
+                await page.keyboard.type(msg.key);
+            } else if (msg.type === 'navigate') {
+                await page.goto(msg.url, { waitUntil: 'networkidle2' });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    ws.on('close', () => clearInterval(interval));
 });
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
