@@ -1,18 +1,28 @@
-const http = require('http');
+const Express = require('express');
+const httpProxy = require('http-proxy');
+const proxy = httpProxy.createProxyServer({ changeOrigin: true });
+const app = Express();
 
-http.createServer((client_req, client_res) => {
-    const options = {
-        hostname: 'www.google.com',
-        port: 80,
-        path: client_req.url,
-        method: client_req.method,
-        headers: client_req.headers
-    };
 
-    const proxy = http.request(options, (res) => {
-        client_res.writeHead(res.statusCode, res.headers);
-        res.pipe(client_res); // Directly pipe the response
+app.get('/', (req, res) => {
+    const targetUrl = req.query.url
+   
+    proxy.web(req, res, { target: targetUrl }, (err) => {
+        res.status(500).send(`Proxy error: ${err.message}`);
     });
+})
 
-    client_req.pipe(proxy); // Pipe client request to the proxy server
-}).listen(3000, () => console.log("Proxy running on port 3000"));
+//Shutdown Processes
+function ProcessShutdown() {
+    console.log("closing server")
+    CloseDB();
+}
+
+process.on("SIGTERM", ProcessShutdown)
+process.on('SIGINT', ProcessShutdown)
+
+//Port
+
+const port = process.env.PORT || 3000;
+
+app.listen(port, () => console.log(`listening on port ${port}...`))
