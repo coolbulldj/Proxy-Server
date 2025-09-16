@@ -5,8 +5,12 @@ const app = express();
 
 async function ScreenshotPage(url) {
     const browser = await puppeteer.launch({
-        headless: true, // run in headless mode
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        headless: false, // run in headless mode
+        args: [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     });
 
     const page = await browser.newPage();
