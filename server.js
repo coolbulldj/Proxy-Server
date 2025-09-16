@@ -1,34 +1,31 @@
-const Express = require('express');
-const { create_proxy_middleware } = require('http-proxy-middleware');
-const app = Express();
+const express = require('express');
+const app = express();
+
+const puppeteer = require('puppeteer')
+
+const browser = await puppeteer.launch();
+
+const page = await browser.newPage();
+
+// Set screen size.
+await page.setViewport({width: 1080, height: 1024});
 
 
+async function ScreenshotPage(url) {
+    await page.goto(url);
+    await page.screenshot({encoding: 'base64'});
+    await browser.close();
+}
 
-app.get('/', (req, res, next) => {
-    const targetUrl = req.query.url
-    
-    const middleware = create_proxy_middleware({
-        target: targetUrl,
-        changeOrigin: true,
-        selfHandleResponse: true,
-        onProxyRes(proxyRes, req, res) {
-            let body = '';
-            proxyRes.on('data', chunk => body += chunk);
-            proxyRes.on('end', () => {
-                // Rewrite absolute URLs in the response body
-                const proxyBase = `${req.protocol}://${req.headers.host}/?url=${targetUrl}`;
-                const rewritten = body.replace(new RegExp(targetUrl, 'g'), proxyBase);
-                res.end(rewritten);
-            });
-        }
-    })
-    middleware(req, res, next);
+app.get('/', (req, res) => {
+    const url = req.query.url;
+    res.send(`You requested the URL: ${url}`);
 })
+
 
 //Shutdown Processes
 function ProcessShutdown() {
     console.log("closing server")
-    CloseDB();
 }
 
 process.on("SIGTERM", ProcessShutdown)
