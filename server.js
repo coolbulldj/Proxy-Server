@@ -19,6 +19,9 @@ async function ScreenshotPage(url) {
 
 app.get('/', (req, res) => {
     const url = req.query.url;
+    
+    ScreenshotPage(url);
+
     res.send(`You requested the URL: ${url}`);
 })
 
