@@ -1,0 +1,44 @@
+
+.display {
+    background-color: rgb(25, 142, 50);
+
+    width: 90%;
+    aspect-ratio: 16 / 9;
+
+    display: block;
+    margin-inline: auto;
+
+    border: solid black 2px;
+}
+
+.header {
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    color: rgb(0, 0, 0);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.url_input {
+    width: 80%;
+    height: 10%;
+
+    font-family: sans-serif;
+    font-size: clamp(0.5rem, 1.5vw, 5rem);
+}
+
+.go_button {
+    background-color: #4CAF50;
+    color: white;
+
+    width:15%;
+    height: 10%;
+
+    font-family: sans-serif;
+    font-size: clamp(0.5rem, 1.5vw, 5rem);
+
+    border-radius: 0.5vw;
+
+    border: none;
+    cursor: pointer;
+}
